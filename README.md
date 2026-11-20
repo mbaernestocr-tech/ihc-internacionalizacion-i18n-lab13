@@ -13,7 +13,7 @@ Elaborado para el curso de IHC (202W0606) de la FISI-UNMSM (semestre 2026-II, Se
 
 ## Pruébelo en línea (GitHub Pages)
 
-**[Portada](https://mbaernestocr-tech.github.io/ihc-internacionalizacion-i18n-lab13/)** ·
+**[Portada](https://mbaernestocr-tech.github.io/ihc-internacionalizacion-i18n-lab13/)** · [Índice de los HTML](https://mbaernestocr-tech.github.io/ihc-internacionalizacion-i18n-lab13/html/) ·
 [13.1 Codificaciones](https://mbaernestocr-tech.github.io/ihc-internacionalizacion-i18n-lab13/html/ejercicio_13_1_laboratorio_codificaciones.html) ·
 [13.2 Portal A frente a B](https://mbaernestocr-tech.github.io/ihc-internacionalizacion-i18n-lab13/html/ejercicio_13_2_portal_i18n_A_vs_B.html) ·
 [13.3 Experimento de formatos](https://mbaernestocr-tech.github.io/ihc-internacionalizacion-i18n-lab13/html/ejercicio_13_3_experimento_formatos_locales.html)
