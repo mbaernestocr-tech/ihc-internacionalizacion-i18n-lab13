@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "Si usa este material, cítelo así."
+title: "Internacionalización y localización de interfaces (i18n/l10n) — Laboratorio 13 de IHC"
+authors:
+  - family-names: "Cancho-Rodríguez"
+    given-names: "Ernesto D."
+date-released: "2026-11-20"
+license: CC-BY-4.0
+repository-code: "https://github.com/mbaernestocr-tech/ihc-internacionalizacion-i18n-lab13"
+url: "https://mbaernestocr-tech.github.io/ihc-internacionalizacion-i18n-lab13/"
+keywords: [i18n, l10n, unicode, hci, intl, rtl, education]

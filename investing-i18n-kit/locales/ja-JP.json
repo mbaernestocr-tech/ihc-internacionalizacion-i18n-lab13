@@ -1,0 +1,41 @@
+{
+  "brand": "アーネスト・インベスティング AI",
+  "nav_dash": "ダッシュボード",
+  "nav_watch": "ウォッチリスト",
+  "nav_trade": "取引",
+  "nav_opt": "最適化",
+  "portfolio": "ポートフォリオ評価額",
+  "change_today": "本日の変動",
+  "updated": "{time} 更新",
+  "market_open": "市場は開いています",
+  "market_closed": "市場は閉じています",
+  "buy": "買い",
+  "sell": "売り",
+  "hold": "保有",
+  "ticker": "銘柄コード",
+  "name": "企業名",
+  "price": "価格",
+  "change": "変動",
+  "signal": "シグナル",
+  "alerts": {
+    "other": "有効なアラート {n} 件"
+  },
+  "shares": {
+    "other": "{n} 株"
+  },
+  "order_title": "模擬注文",
+  "qty": "数量",
+  "place_order": "注文を送信",
+  "order_ok": "模擬注文：{ticker} を {price} で {qty}。",
+  "risk": "リスク許容度",
+  "conservative": "安定型",
+  "moderate": "中立型",
+  "aggressive": "積極型",
+  "disclaimer": "教育目的の合成データです。投資助言ではありません。",
+  "search_ph": "企業名または銘柄コードで検索",
+  "sort_by": "名前順",
+  "lang_label": "言語",
+  "tz_label": "タイムゾーン",
+  "close_time": "NYSE 終値時刻：{time}",
+  "tip": "予測には不確実性があります。信頼区間を確認してください。"
+}

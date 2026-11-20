@@ -1,0 +1,43 @@
+{
+  "brand": "Ernesto Investing AI",
+  "nav_dash": "Panel",
+  "nav_watch": "Vigilancia",
+  "nav_trade": "Operar",
+  "nav_opt": "Optimizador",
+  "portfolio": "Valor del portafolio",
+  "change_today": "Variación de hoy",
+  "updated": "Actualizado {time}",
+  "market_open": "Mercado abierto",
+  "market_closed": "Mercado cerrado",
+  "buy": "Comprar",
+  "sell": "Vender",
+  "hold": "Mantener",
+  "ticker": "Símbolo",
+  "name": "Empresa",
+  "price": "Precio",
+  "change": "Variación",
+  "signal": "Señal",
+  "alerts": {
+    "one": "{n} alerta activa",
+    "other": "{n} alertas activas"
+  },
+  "shares": {
+    "one": "{n} acción",
+    "other": "{n} acciones"
+  },
+  "order_title": "Orden simulada",
+  "qty": "Cantidad",
+  "place_order": "Enviar orden",
+  "order_ok": "Orden simulada: {qty} de {ticker} a {price}.",
+  "risk": "Perfil de riesgo",
+  "conservative": "Conservador",
+  "moderate": "Moderado",
+  "aggressive": "Agresivo",
+  "disclaimer": "Datos sintéticos con fines educativos. No es asesoría de inversión.",
+  "search_ph": "Buscar empresa o símbolo",
+  "sort_by": "Ordenado por nombre",
+  "lang_label": "Idioma",
+  "tz_label": "Zona horaria",
+  "close_time": "Cierre NYSE: {time}",
+  "tip": "Las predicciones son inciertas: revise el intervalo de confianza."
+}

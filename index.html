@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 13 IHC · Internacionalización y localización</title>
+<meta name="description" content="Tres aplicaciones HTML, kit de i18n, auditoría real de 14 sitios financieros, diagramas UML y prompts ESLBHP.">
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#4a5560;--card:#f3f6fa;--bd:#c9d3df;--ac:#0c4a8a}
+@media (prefers-color-scheme:dark){:root{--bg:#121820;--fg:#eef2f6;--mut:#b4c0cc;--card:#1b2530;--bd:#3a4858;--ac:#8cc4ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.6 system-ui,Segoe UI,Arial,sans-serif}
+main{max-width:52rem;margin:0 auto;padding:1.5rem 1rem 3rem}h1{font-size:1.6rem;line-height:1.25}p{color:var(--mut)}
+ul{list-style:none;padding:0;display:grid;gap:.9rem}li{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:1rem}
+a{color:var(--ac);font-weight:600}a:focus-visible{outline:3px solid var(--ac);outline-offset:3px}li a{font-size:1.1rem}li span{display:block;color:var(--mut);font-size:.95rem;margin-top:.25rem}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.cmp figure{margin:0}.cmp img{width:100%;height:auto;border:1px solid var(--bd);border-radius:8px}.cmp figcaption{font-size:.85rem;color:var(--mut)}
+@media(max-width:620px){.cmp{grid-template-columns:1fr}}footer{margin-top:2rem;font-size:.9rem;color:var(--mut)}
+</style>
+</head>
+<body>
+<main>
+<h1>Laboratorio 13 · Internacionalización y localización de interfaces</h1>
+<p>Curso de Interacción Hombre-Computador, FISI-UNMSM, 2026-II. Caso común: «Ernesto Investing AI» (datos sintéticos) en es-PE, en-US, qu-PE (borrador), ar-EG y ja-JP.</p>
+<ul>
+<li><a href="html/ejercicio_13_1_laboratorio_codificaciones.html">Ejercicio 13.1 · Laboratorio de codificaciones</a><span>Puntos de código, bytes UTF-8/UTF-16, grafemas, mojibake y normalización NFC/NFD.</span></li>
+<li><a href="html/ejercicio_13_2_portal_i18n_A_vs_B.html">Ejercicio 13.2 · Portal A (con errores) frente a B (internacionalizado)</a><span>12 errores clásicos, 5 idiomas, RTL, pseudolocalización y auditor del DOM con CSV.</span></li>
+<li><a href="html/ejercicio_13_3_experimento_formatos_locales.html">Ejercicio 13.3 · Experimento de formatos ambiguos y explícitos</a><span>16 ítems con orden contrabalanceado, tiempo, confianza y CSV por participante.</span></li>
+</ul>
+<div class="cmp" role="group" aria-label="Comparación de las versiones A y B del portal">
+<figure><img src="capturas/S13_captura_13_2_A_es-PE.png" alt="Versión A del portal en español: tabla con textos truncados y fecha con formato fijo" loading="lazy"><figcaption>Versión A (con errores), es-PE</figcaption></figure>
+<figure><img src="capturas/S13_captura_13_2_B_ar-EG.png" alt="Versión B del portal en árabe, con la interfaz espejada de derecha a izquierda" loading="lazy"><figcaption>Versión B (internacionalizada), ar-EG</figcaption></figure>
+</div>
+<footer>Material educativo con datos sintéticos; las traducciones a árabe, japonés y quechua son borradores sin revisión nativa. Código, notebooks, datos y diagramas: <a href="https://github.com/mbaernestocr-tech/ihc-internacionalizacion-i18n-lab13" style="font-size:inherit">repositorio en GitHub</a>. © 2026 Ernesto D. Cancho-Rodríguez, CC BY 4.0.</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es-PE"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ejercicio 13.1 · Laboratorio de codificaciones (caso Investing AI)</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#0d1b2a;--mut:#5b6b7e;--brand:#0b2a4a;--acc:#0f766e;--bd:#d5deea}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 system-ui,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--brand);color:#fff;padding:.8rem 1rem}main{max-width:1100px;margin:0 auto;padding:1rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:1rem;margin-bottom:1rem}h2{margin:.1rem 0 .6rem;font-size:18px;color:var(--brand)}
+textarea,select,input{font:inherit;padding:.4rem;border:1px solid var(--bd);border-radius:6px;width:100%}textarea{min-height:70px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{border-bottom:1px solid var(--bd);padding:.3rem .5rem;text-align:start}code{font-family:Consolas,monospace;background:#eef3f9;padding:0 .25rem;border-radius:4px}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:.45rem .8rem;font-weight:700;cursor:pointer;margin:.15rem .15rem .15rem 0}.row{display:flex;gap:.6rem;flex-wrap:wrap}.row>*{flex:1 1 220px}
+.moji{font-size:20px;background:#fff8e1;padding:.4rem;border-radius:6px;border:1px dashed #d6b656}.mut{color:var(--mut);font-size:13px}
+</style></head><body>
+<header><b>Ejercicio 13.1</b> · Inspector de codificaciones — textos de «Ernesto Investing AI»</header>
+<main>
+<section class="card"><h2>1. Texto de entrada</h2>
+ <div class="row"><div><label for="pre">Ejemplos del caso (señales, mercados, divisas)</label><select id="pre">
+  <option value="Acción AAPL: cotización 189,50 US$ — señal COMPRAR ✔">es-PE · señal y precio</option>
+  <option value="Ñandú Minerals · S/ 1 234,56 · Ábaco Capital · 15 % ▲">es-PE · Ñ, Á, S/ y ▲</option>
+  <option value="買い / 売り — 東京証券取引所 ¥1,234">ja-JP · 買い / 売り</option>
+  <option value="شراء / بيع — تداول السعودية ‏١٢٣٫٤٥ ر.س">ar-SA · شراء / بيع</option>
+  <option value="Portfólio: ação PETR4 — 12,3 % 👩🏽‍💼📈">pt-BR · emoji con modificadores</option></select></div>
+ <div><label for="txt">Edite o pegue su texto</label><textarea id="txt"></textarea></div></div></section>
+<section class="card"><h2>2. Resumen: caracteres, puntos de código, grafemas y bytes</h2><table id="res"></table>
+ <p class="mut">«Caracteres» de JavaScript (<code>.length</code>) cuenta unidades UTF-16. Un grafema es lo que el usuario percibe como un carácter (<code>Intl.Segmenter</code>).</p></section>
+<section class="card"><h2>3. Puntos de código y bytes UTF-8 / UTF-16</h2><div style="max-height:260px;overflow:auto"><table id="cps"><thead><tr><th>#</th><th>Carácter</th><th>Punto de código</th><th>UTF-8 (hex)</th><th>UTF-16 (hex)</th><th>Bytes UTF-8</th></tr></thead><tbody></tbody></table></div></section>
+<section class="card"><h2>4. Generador de mojibake (codificar en X y decodificar en Y)</h2>
+ <div class="row"><div><label for="enc">Codificar el texto como</label><select id="enc"><option>utf-8</option><option>utf-16le</option></select></div>
+ <div><label for="dec">Decodificar (mal) como</label><select id="dec"><option>windows-1252</option><option>iso-8859-1</option><option>utf-8</option><option>shift_jis</option></select></div></div>
+ <p class="moji" id="moji" aria-live="polite"></p><p class="mut">Ejemplo clásico: «Señal» en UTF-8 leído como windows-1252 produce «SeÃ±al».</p></section>
+<section class="card"><h2>5. Normalización Unicode (NFC / NFD)</h2><div class="row"><button id="nfc" type="button">Normalizar NFC</button><button id="nfd" type="button">Normalizar NFD</button></div>
+ <p id="norm" class="mut"></p></section>
+<section class="card"><h2>6. Registro y exportación</h2><button id="log" type="button">Registrar esta medición</button><button id="csv" type="button">Exportar CSV</button><span class="mut" id="n">0 registros</span></section>
+<p class="mut">Datos de texto de ejemplo; no hay participantes. Material educativo CC BY 4.0.</p>
+</main>
+<script>
+const $ = s => document.querySelector(s), reg = [];
+const hex = (u8, sep = ' ') => [...u8].map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(sep);
+function u16(s) { const o = []; for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); o.push(c & 255, c >> 8); } return o; }
+function u16hex(cp) { const s = String.fromCodePoint(cp), o = []; for (let i = 0; i < s.length; i++) o.push(s.charCodeAt(i).toString(16).padStart(4, '0').toUpperCase()); return o.join(' '); }
+function stats(s) {
+  const utf8 = new TextEncoder().encode(s), cps = [...s], seg = [...new Intl.Segmenter('es', { granularity: 'grapheme' }).segment(s)];
+  const latin1 = [...s].every(c => c.codePointAt(0) < 256) ? cps.length : null;
+  return { chars: s.length, cps: cps.length, graf: seg.length, b8: utf8.length, b16: s.length * 2, b1: latin1 };
+}
+function mojibake(s, enc, dec) {
+  const bytes = enc === 'utf-8' ? new TextEncoder().encode(s) : new Uint8Array(u16(s));
+  try { return new TextDecoder(dec, { fatal: false }).decode(bytes); } catch (e) { return '(el navegador no admite ' + dec + ')'; }
+}
+function pintar() {
+  const s = $('#txt').value, st = stats(s);
+  $('#res').innerHTML = `<tr><th>JavaScript <code>.length</code> (unidades UTF-16)</th><td>${st.chars}</td></tr><tr><th>Puntos de código Unicode</th><td>${st.cps}</td></tr><tr><th>Grafemas (lo que ve el usuario)</th><td>${st.graf}</td></tr>
+   <tr><th>Bytes en UTF-8</th><td>${st.b8}</td></tr><tr><th>Bytes en UTF-16</th><td>${st.b16}</td></tr><tr><th>Bytes en ISO-8859-1</th><td>${st.b1 === null ? 'no representable (hay caracteres fuera de Latin-1)' : st.b1}</td></tr>
+   <tr><th>Expansión UTF-8 / caracteres</th><td>${st.cps ? (st.b8 / st.cps).toFixed(2) : 0} bytes por punto de código</td></tr>`;
+  $('#cps tbody').innerHTML = [...s].slice(0, 60).map((c, i) => { const cp = c.codePointAt(0); return `<tr><td>${i + 1}</td><td>${c.trim() ? c : '␣'}</td><td><code>U+${cp.toString(16).toUpperCase().padStart(4, '0')}</code></td><td><code>${hex(new TextEncoder().encode(c))}</code></td><td><code>${u16hex(cp)}</code></td><td>${new TextEncoder().encode(c).length}</td></tr>`; }).join('');
+  $('#moji').textContent = mojibake(s, $('#enc').value, $('#dec').value);
+  const a = s.normalize('NFC'), d = s.normalize('NFD');
+  $('#norm').textContent = `NFC: ${[...a].length} puntos de código · NFD: ${[...d].length} puntos de código · ¿iguales sin normalizar? ${a === d ? 'sí' : 'no'} (la comparación de «Ñ» puede fallar si no se normaliza).`;
+  return st;
+}
+$('#pre').onchange = () => { $('#txt').value = $('#pre').value; pintar(); };
+$('#txt').addEventListener('input', pintar); $('#enc').onchange = $('#dec').onchange = pintar;
+$('#nfc').onclick = () => { $('#txt').value = $('#txt').value.normalize('NFC'); pintar(); };
+$('#nfd').onclick = () => { $('#txt').value = $('#txt').value.normalize('NFD'); pintar(); };
+$('#log').onclick = () => { const st = pintar(); reg.push({ hora: new Date().toISOString().slice(11, 19), texto: $('#txt').value.slice(0, 40).replace(/[",\n]/g, ' '), chars: st.chars, puntos_codigo: st.cps, grafemas: st.graf, bytes_utf8: st.b8, bytes_utf16: st.b16, mojibake: mojibake($('#txt').value, $('#enc').value, $('#dec').value).slice(0, 40).replace(/[",\n]/g, ' ') }); $('#n').textContent = reg.length + ' registros'; };
+$('#csv').onclick = () => { const cols = Object.keys(reg[0] || { hora: 1 }); const s = '﻿' + cols.join(',') + '\n' + reg.map(r => cols.map(c => '"' + r[c] + '"').join(',')).join('\n'); window.__csv = s;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s], { type: 'text/csv' })); a.download = 'ejercicio_13_1_codificaciones.csv'; a.click(); };
+$('#txt').value = $('#pre').value; pintar();
+</script></body></html>

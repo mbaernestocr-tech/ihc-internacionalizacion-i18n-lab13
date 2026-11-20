@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es-PE" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ejercicio 13.2 · Portal Investing AI: A (hardcodeado) frente a B (internacionalizado)</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#0d1b2a;--mut:#5b6b7e;--brand:#0b2a4a;--acc:#0f766e;--up:#0a7d36;--dn:#b42318;--bd:#d5deea}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 system-ui,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.tool{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;padding:.5rem 1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.tool label{font-size:12px;display:flex;flex-direction:column;gap:2px}.tool select,.tool button{font:inherit;padding:.3rem .5rem;border-radius:6px;border:1px solid #9fb3c8}
+.tool button{background:#fff;color:var(--brand);cursor:pointer;font-weight:600}.tool .ver[aria-pressed=true]{background:#facc15}
+main{max-width:1100px;margin:0 auto;padding:1rem}.nav{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;background:var(--card);padding:.6rem 1rem;border-radius:10px;border:1px solid var(--bd)}
+.brand{font-weight:800;color:var(--brand)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;margin:.8rem 0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:.9rem}.kpi b{display:block;font-size:24px;margin-top:.2rem}.mut{color:var(--mut);font-size:13px}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}th,td{padding:.45rem .6rem;border-bottom:1px solid var(--bd);text-align:start}
+.up{color:var(--up)}.dn{color:var(--dn)}.pill{display:inline-block;padding:.1rem .5rem;border-radius:99px;background:#e0f2f1;color:#0f766e;font-weight:600}
+.fixed{width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}  /* ERROR A: ancho fijo */
+.A.legacy{direction:ltr;text-align:left}.A .padl{margin-left:12px}.A td,.A th{text-align:left}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}@media(max-width:760px){.cols{grid-template-columns:1fr}}
+#aud td,#aud th{font-size:13px}#err li{margin:.2rem 0}.ok{color:var(--up)}.bad{color:var(--dn)}
+button.go{background:var(--acc);color:#fff;border:0;padding:.5rem .9rem;border-radius:8px;font-weight:700;cursor:pointer}
+input[type=number]{padding:.35rem;border:1px solid var(--bd);border-radius:6px;width:7rem}.aviso{font-size:12px;color:var(--mut);margin-top:1rem}
+</style></head>
+<body>
+<div class="tool" role="toolbar" aria-label="Controles del laboratorio">
+ <label>Idioma / Locale<select id="loc"><option>es-PE</option><option>en-US</option><option>qu-PE</option><option>ar-EG</option><option>ja-JP</option></select></label>
+ <label>Zona horaria<select id="tz"><option>America/Lima</option><option>America/New_York</option><option>Asia/Tokyo</option><option>Asia/Riyadh</option><option>Europe/Madrid</option></select></label>
+ <button id="vA" class="ver" aria-pressed="false" type="button">Versión A (con errores)</button>
+ <button id="vB" class="ver" aria-pressed="true" type="button">Versión B (internacionalizada)</button>
+ <label><span><input type="checkbox" id="ps"> Pseudolocalizar (+40 %)</span></label>
+ <button id="aud_btn" type="button">Auditar DOM</button><button id="csv" type="button">Exportar CSV</button>
+</div>
+<main id="app"></main>
+<main>
+ <section class="card"><h2 style="margin-top:0">Auditoría del DOM (medida real en este navegador)</h2>
+  <div style="overflow:auto"><table id="aud"><thead><tr><th>Hora</th><th>Locale</th><th>Versión</th><th>Pseudo</th><th>Truncados</th><th>Desbordes</th><th>Fechas fijas</th><th>Dinero fijo</th><th>lang ok</th><th>dir ok</th><th>Expansión %</th><th>Caracteres</th></tr></thead><tbody></tbody></table></div>
+  <p class="mut">Cada fila es una medición de ESTA sesión. «Expansión %» compara los caracteres visibles con es-PE en la misma versión. Los CSV de pruebas automáticas se rotulan PRUEBA_TECNICA_BOT y no se interpretan.</p></section>
+ <section class="card" style="margin-top:.8rem"><h2 style="margin-top:0">Los 12 errores clásicos de la versión A</h2><ol id="err"></ol></section>
+ <p class="aviso">Datos sintéticos; cantidad y divisa fijas (cambiar de idioma no convierte divisas). Traducciones ar, ja y qu: borradores que requieren revisión humana. Material educativo CC BY 4.0.</p>
+</main>
+<script>
+/* investing_i18n_kit/i18n.js — Ernesto Investing AI · kit de internacionalización (Sesión 13, IHC 2026-II). Licencia CC BY 4.0. Material educativo. */
+const I18N = (() => {
+  const RTL = ['ar', 'he', 'fa', 'ur'];
+  const FIXTURE_UTC = '2026-11-20T21:00:00Z';              // cierre NYSE de ejemplo (16:00 ET): dato técnico, no una medición
+  const MONEY = { amount: 125430.5, currency: 'USD' };      // cantidad y divisa fijas: cambiar el idioma NO convierte divisas
+  let dicts = {}, loc = 'es-PE', tz = 'America/Lima', pseudo = false;
+  const base = l => l.split('-')[0];
+  function load(d) { dicts = d; }
+  function set(o) { if (o.locale) loc = o.locale; if (o.tz) tz = o.tz; if ('pseudo' in o) pseudo = !!o.pseudo; return state(); }
+  function state() { return { locale: loc, tz, pseudo, dir: dir() }; }
+  function dir() { return RTL.includes(base(loc)) ? 'rtl' : 'ltr'; }
+  function pseudoloc(s) {  // pseudolocalización: acentos + ~40 % de longitud; conserva {variables}
+    const m = { a: 'á', e: 'é', i: 'í', o: 'ó', u: 'ú', A: 'Á', E: 'É', I: 'Í', O: 'Ó', U: 'Ú', n: 'ñ', c: 'ç' };
+    const out = s.split(/(\{[^}]+\})/).map(p => /^\{/.test(p) ? p : p.replace(/[aeiouAEIOUnc]/g, c => m[c])).join('');
+    return '[' + out + ' ' + '·'.repeat(Math.ceil(s.length * 0.4)) + ']';
+  }
+  function raw(key) { const d = dicts[loc] || {}; return d[key] !== undefined ? d[key] : (dicts['es-PE'] || {})[key]; }
+  function t(key, vars) {
+    let v = raw(key); vars = vars || {};
+    if (v === undefined) return '⟦' + key + '⟧';                 // clave ausente visible, nunca silenciosa
+    if (typeof v === 'object') { const cat = new Intl.PluralRules(loc).select(vars.n); v = v[cat] !== undefined ? v[cat] : v.other; }
+    v = v.replace(/\{(\w+)\}/g, (_, k) => (vars[k] !== undefined ? vars[k] : '{' + k + '}'));
+    return pseudo ? pseudoloc(v) : v;
+  }
+  const num = (x, o) => new Intl.NumberFormat(loc, o).format(x);
+  const money = (x, cur, o) => new Intl.NumberFormat(loc, Object.assign({ style: 'currency', currency: cur || MONEY.currency }, o)).format(x);
+  const pct = x => new Intl.NumberFormat(loc, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'exceptZero' }).format(x);
+  const dt = (iso, o) => new Intl.DateTimeFormat(loc, Object.assign({ dateStyle: 'medium', timeStyle: 'short', timeZone: tz }, o)).format(new Date(iso || FIXTURE_UTC));
+  const rel = (v, unit) => new Intl.RelativeTimeFormat(loc, { numeric: 'auto' }).format(v, unit);
+  const names = c => { try { return new Intl.DisplayNames([c], { type: 'language' }).of(c); } catch (e) { return c; } };
+  const sort = (arr, f) => arr.slice().sort((a, b) => new Intl.Collator(loc).compare(f(a), f(b)));
+  function apply(root) {  // para páginas estáticas: <span data-i18n="clave"></span>
+    (root || document).querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n, { n: e.dataset.n }); });
+    document.documentElement.lang = loc; document.documentElement.dir = dir();
+  }
+  return { load, set, state, dir, t, num, money, pct, dt, rel, names, sort, apply, pseudoloc, MONEY, FIXTURE_UTC, get locales() { return Object.keys(dicts); } };
+})();
+if (typeof module !== 'undefined') module.exports = I18N;
+
+const LOCALES = {"es-PE": {"brand": "Ernesto Investing AI", "nav_dash": "Panel", "nav_watch": "Vigilancia", "nav_trade": "Operar", "nav_opt": "Optimizador", "portfolio": "Valor del portafolio", "change_today": "Variación de hoy", "updated": "Actualizado {time}", "market_open": "Mercado abierto", "market_closed": "Mercado cerrado", "buy": "Comprar", "sell": "Vender", "hold": "Mantener", "ticker": "Símbolo", "name": "Empresa", "price": "Precio", "change": "Variación", "signal": "Señal", "alerts": {"one": "{n} alerta activa", "other": "{n} alertas activas"}, "shares": {"one": "{n} acción", "other": "{n} acciones"}, "order_title": "Orden simulada", "qty": "Cantidad", "place_order": "Enviar orden", "order_ok": "Orden simulada: {qty} de {ticker} a {price}.", "risk": "Perfil de riesgo", "conservative": "Conservador", "moderate": "Moderado", "aggressive": "Agresivo", "disclaimer": "Datos sintéticos con fines educativos. No es asesoría de inversión.", "search_ph": "Buscar empresa o símbolo", "sort_by": "Ordenado por nombre", "lang_label": "Idioma", "tz_label": "Zona horaria", "close_time": "Cierre NYSE: {time}", "tip": "Las predicciones son inciertas: revise el intervalo de confianza."}, "en-US": {"brand": "Ernesto Investing AI", "nav_dash": "Dashboard", "nav_watch": "Watchlist", "nav_trade": "Trade", "nav_opt": "Optimizer", "portfolio": "Portfolio value", "change_today": "Today's change", "updated": "Updated {time}", "market_open": "Market open", "market_closed": "Market closed", "buy": "Buy", "sell": "Sell", "hold": "Hold", "ticker": "Symbol", "name": "Company", "price": "Price", "change": "Change", "signal": "Signal", "alerts": {"one": "{n} active alert", "other": "{n} active alerts"}, "shares": {"one": "{n} share", "other": "{n} shares"}, "order_title": "Simulated order", "qty": "Quantity", "place_order": "Place order", "order_ok": "Simulated order: {qty} of {ticker} at {price}.", "risk": "Risk profile", "conservative": "Conservative", "moderate": "Moderate", "aggressive": "Aggressive", "disclaimer": "Synthetic data for educational purposes. Not investment advice.", "search_ph": "Search company or symbol", "sort_by": "Sorted by name", "lang_label": "Language", "tz_label": "Time zone", "close_time": "NYSE close: {time}", "tip": "Predictions are uncertain: check the confidence interval."}, "ar-EG": {"brand": "إيرنستو إنفستنغ إيه آي", "nav_dash": "لوحة المعلومات", "nav_watch": "قائمة المراقبة", "nav_trade": "تداول", "nav_opt": "المُحسِّن", "portfolio": "قيمة المحفظة", "change_today": "تغيّر اليوم", "updated": "آخر تحديث {time}", "market_open": "السوق مفتوح", "market_closed": "السوق مغلق", "buy": "شراء", "sell": "بيع", "hold": "احتفاظ", "ticker": "الرمز", "name": "الشركة", "price": "السعر", "change": "التغيّر", "signal": "الإشارة", "alerts": {"zero": "لا توجد تنبيهات نشطة", "one": "تنبيه نشط واحد", "two": "تنبيهان نشطان", "few": "{n} تنبيهات نشطة", "many": "{n} تنبيهًا نشطًا", "other": "{n} تنبيه نشط"}, "shares": {"zero": "لا أسهم", "one": "سهم واحد", "two": "سهمان", "few": "{n} أسهم", "many": "{n} سهمًا", "other": "{n} سهم"}, "order_title": "أمر تجريبي", "qty": "الكمية", "place_order": "إرسال الأمر", "order_ok": "أمر تجريبي: {qty} من {ticker} بسعر {price}.", "risk": "مستوى المخاطرة", "conservative": "متحفظ", "moderate": "معتدل", "aggressive": "جريء", "disclaimer": "بيانات اصطناعية لأغراض تعليمية. ليست نصيحة استثمارية.", "search_ph": "ابحث عن شركة أو رمز", "sort_by": "مرتّب حسب الاسم", "lang_label": "اللغة", "tz_label": "المنطقة الزمنية", "close_time": "إغلاق بورصة نيويورك: {time}", "tip": "التوقعات غير مؤكدة: راجع فترة الثقة."}, "ja-JP": {"brand": "アーネスト・インベスティング AI", "nav_dash": "ダッシュボード", "nav_watch": "ウォッチリスト", "nav_trade": "取引", "nav_opt": "最適化", "portfolio": "ポートフォリオ評価額", "change_today": "本日の変動", "updated": "{time} 更新", "market_open": "市場は開いています", "market_closed": "市場は閉じています", "buy": "買い", "sell": "売り", "hold": "保有", "ticker": "銘柄コード", "name": "企業名", "price": "価格", "change": "変動", "signal": "シグナル", "alerts": {"other": "有効なアラート {n} 件"}, "shares": {"other": "{n} 株"}, "order_title": "模擬注文", "qty": "数量", "place_order": "注文を送信", "order_ok": "模擬注文：{ticker} を {price} で {qty}。", "risk": "リスク許容度", "conservative": "安定型", "moderate": "中立型", "aggressive": "積極型", "disclaimer": "教育目的の合成データです。投資助言ではありません。", "search_ph": "企業名または銘柄コードで検索", "sort_by": "名前順", "lang_label": "言語", "tz_label": "タイムゾーン", "close_time": "NYSE 終値時刻：{time}", "tip": "予測には不確実性があります。信頼区間を確認してください。"}, "qu-PE": {"_estado": "BORRADOR: requiere revisión de hablante nativo; las claves ausentes usan es-PE", "brand": "Ernesto Investing AI", "portfolio": "Qullqi tantasqa chanin", "buy": "Rantiy", "sell": "Qatuy", "price": "Chanin", "name": "Suti", "qty": "Hayk'a", "alerts": {"other": "{n} willay"}, "disclaimer": "Yachaywasipaq rikuchiy. Manam qullqi churanapaq kamachiychu."}};
+I18N.load(LOCALES);
+const ERR = [
+ 'E01 Concatenación de frases: "Tienes " + n + " alertas" rompe el orden en árabe y japonés.',
+ 'E02 Plural «añadir s»: no existen las 6 categorías del árabe (cero, uno, dos, pocos, muchos, otro).',
+ 'E03 Fecha fija dd/mm/aaaa: ambigua para un estadounidense y desconocida en japonés.',
+ 'E04 Dinero con "$" + toFixed(2): separadores, símbolo y dígitos propios del locale ignorados.',
+ 'E05 Ancho fijo de 96 px: el texto más largo (alemán, árabe, pseudolocalizado) se trunca.',
+ 'E06 CSS físico (margin-left, text-align:left) y sin dir: el árabe no se espeja.',
+ 'E07 Orden alfabético con < : «Á» y «Ñ» quedan al final (sin Intl.Collator).',
+ 'E08 Zona horaria fija (Lima): ignora la del usuario; la hora de cierre es errónea fuera de Lima.',
+ 'E09 Hora 24 h con formato manual: no respeta 12 h / 24 h ni el sistema numérico del locale.',
+ 'E10 Rojo/verde como único indicador: en Japón y China el alza suele ser roja; hay daltonismo.',
+ 'E11 Banderas como selector de idioma: un idioma no es un país (es-PE ≠ bandera de España).',
+ 'E12 Texto incrustado en una imagen (insignia SVG como imagen): no se traduce ni se lee.'];
+document.getElementById('err').innerHTML = ERR.map(e => '<li>' + e + '</li>').join('');
+const ACT = [['BVN', 'Buenaventura', 18.42, 0.0123], ['ALM', 'Álamos Gold', 14.1, -0.0214], ['SCC', 'Southern Copper', 112.35, 0.0061],
+ ['NAN', 'Ñandú Minerals (demo)', 3.76, 0.0334], ['ABA', 'Ábaco Capital (demo)', 27.9, -0.0049], ['ZNC', 'Zinc Perú (demo)', 9.05, 0.0] ];
+let ver = 'B', log = [];
+const $ = s => document.querySelector(s);
+const flagFor = l => ({ 'es-PE': '🇵🇪', 'en-US': '🇺🇸', 'qu-PE': '🇵🇪', 'ar-EG': '🇪🇬', 'ja-JP': '🇯🇵' }[l]);
+function render() {
+  const st = I18N.state(), t = I18N.t, A = ver === 'A';
+  document.documentElement.lang = A ? 'es-PE' : st.locale; document.documentElement.dir = A ? 'ltr' : st.dir;   // A ignora lang/dir
+  const alerts = 3, qty = 1500, price = 18.42;
+  const insignia = '<svg width="150" height="26" role="img"><rect width="150" height="26" rx="13" fill="#0a7d36"/><text x="75" y="18" fill="#fff" font-size="13" text-anchor="middle">Mercado abierto</text></svg>';
+  let h = '';
+  if (A) {
+    const f2 = n => '$' + n.toFixed(2), d = new Date(I18N.FIXTURE_UTC);
+    const dstr = String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear();
+    const hh = String(d.getUTCHours() - 5).padStart(2, '0') + ':00 (hora de Lima)';
+    const rows = ACT.slice().sort((a, b) => a[1] < b[1] ? -1 : 1).map(a => `<tr><td><span class="fixed">${a[0]}</span></td><td><span class="fixed">${a[1]}</span></td><td>${f2(a[2])}</td><td class="${a[3] >= 0 ? 'up' : 'dn'}">${(a[3] * 100).toFixed(2)}%</td><td><span class="fixed">${a[3] > 0.01 ? t('buy') : a[3] < -0.01 ? t('sell') : t('hold')}</span></td></tr>`).join('');
+    h = `<section class="A legacy"><div class="nav"><span class="brand">${t('brand')}</span><span class="padl">${t('nav_dash')}</span><span class="padl">${t('nav_watch')}</span><span class="padl">${t('nav_trade')}</span><span class="padl">${flagFor(st.locale)} ${st.locale}</span></div>
+    <div class="grid"><div class="card kpi"><span class="mut"><span class="fixed">${t('portfolio')}</span></span><b>${f2(I18N.MONEY.amount)}</b></div>
+    <div class="card kpi"><span class="mut">${t('change_today')}</span><b class="up">+1.23%</b></div>
+    <div class="card kpi"><span class="mut">${t('updated', { time: dstr + ' ' + hh })}</span><b>Tienes ${alerts} ${t('alerts', { n: 1 }).split(' ').slice(-2)[0]}s</b></div>
+    <div class="card kpi"><span class="mut">${t('market_open')}</span><div>${insignia}</div></div></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>${t('ticker')}</th><th>${t('name')}</th><th>${t('price')}</th><th>${t('change')}</th><th>${t('signal')}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="card" style="margin-top:.8rem"><h3 style="margin-top:0">${t('order_title')}</h3><span class="fixed">${t('qty')}</span> <input type="number" value="${qty}"> <button class="go" type="button">${t('place_order')}</button>
+    <p>${t('order_ok', { qty: qty + ' ' + 'acciones', ticker: 'BVN', price: f2(price) })}</p></div></section>`;
+  } else {
+    const sorted = I18N.sort(ACT, a => a[1]);
+    const rows = sorted.map(a => { const c = a[3]; const sign = c > 0 ? '▲ ' : c < 0 ? '▼ ' : '■ ';
+      return `<tr><td>${a[0]}</td><td>${a[1]}</td><td>${I18N.money(a[2], 'USD')}</td><td class="${c > 0 ? 'up' : c < 0 ? 'dn' : ''}">${sign}${I18N.pct(c)}</td><td>${c > 0.01 ? t('buy') : c < -0.01 ? t('sell') : t('hold')}</td></tr>`; }).join('');
+    const close = I18N.dt(I18N.FIXTURE_UTC, { dateStyle: 'full', timeStyle: 'long' });
+    h = `<section><div class="nav"><span class="brand">${t('brand')}</span><span>${t('nav_dash')}</span><span>${t('nav_watch')}</span><span>${t('nav_trade')}</span><span style="margin-inline-start:auto">${t('lang_label')}: ${I18N.names(st.locale)} (${st.locale})</span></div>
+    <div class="grid"><div class="card kpi"><span class="mut">${t('portfolio')}</span><b>${I18N.money(I18N.MONEY.amount, 'USD')}</b></div>
+    <div class="card kpi"><span class="mut">${t('change_today')}</span><b class="up">▲ ${I18N.pct(0.0123)}</b></div>
+    <div class="card kpi"><span class="mut">${t('updated', { time: I18N.dt(I18N.FIXTURE_UTC) })}</span><b>${t('alerts', { n: alerts })}</b></div>
+    <div class="card kpi"><span class="mut">${t('close_time', { time: I18N.dt(I18N.FIXTURE_UTC, { dateStyle: undefined, timeStyle: 'short' }) })}</span><div><span class="pill">${t('market_open')}</span> <span class="mut">${I18N.rel(-5, 'minute')}</span></div></div></div>
+    <div style="overflow-x:auto"><table><caption class="mut" style="text-align:start;padding:.4rem">${t('sort_by')} · ${close}</caption><thead><tr><th scope="col">${t('ticker')}</th><th scope="col">${t('name')}</th><th scope="col">${t('price')}</th><th scope="col">${t('change')}</th><th scope="col">${t('signal')}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="card" style="margin-top:.8rem"><h3 style="margin-top:0">${t('order_title')}</h3><label>${t('qty')} <input type="number" value="${qty}" aria-label="${t('qty')}"></label> <button class="go" type="button">${t('place_order')}</button>
+    <p>${t('order_ok', { qty: t('shares', { n: qty }).replace('{n}', I18N.num(qty)), ticker: 'BVN', price: I18N.money(price, 'USD') })}</p><p class="mut">${t('risk')}: ${t('conservative')} · ${t('moderate')} · ${t('aggressive')}</p></div>
+    <p class="mut">${t('tip')}</p></section>`;
+  }
+  $('#app').innerHTML = h + `<p class="aviso">${I18N.t('disclaimer')}</p>`;
+}
+function medir() {
+  const app = $('#app'), els = [...app.querySelectorAll('*')];
+  const trunc = els.filter(e => getComputedStyle(e).overflow !== 'visible' && e.scrollWidth > e.clientWidth + 1 && e.clientWidth > 0).length;
+  const vw = document.documentElement.clientWidth, over = els.filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > vw + 1 || r.left < -1); }).length;
+  const txt = app.innerText, fechas = (txt.match(/\b\d{2}\/\d{2}\/\d{4}\b/g) || []).length, dinero = (txt.match(/\$\d+\.\d{2}\b/g) || []).length;
+  const st = I18N.state(), exp = { lang: document.documentElement.lang === st.locale, dir: document.documentElement.dir === st.dir };
+  return { hora: new Date().toISOString().slice(11, 19), locale: st.locale, version: ver, pseudo: st.pseudo ? 'sí' : 'no', truncados: trunc, desbordes: over, fechas_fijas: fechas, dinero_fijo: dinero,
+    lang_ok: exp.lang ? 'sí' : 'no', dir_ok: exp.dir ? 'sí' : 'no', caracteres: txt.length };
+}
+const base = {};
+function auditar() {
+  const m = medir(), k = m.version + (m.pseudo === 'sí' ? 'P' : '');
+  if (m.locale === 'es-PE') base[k] = m.caracteres;
+  m.expansion = base[k] ? Math.round((m.caracteres / base[k] - 1) * 100) : '';
+  log.push(m);
+  $('#aud tbody').insertAdjacentHTML('beforeend', `<tr><td>${m.hora}</td><td>${m.locale}</td><td>${m.version}</td><td>${m.pseudo}</td><td class="${m.truncados ? 'bad' : 'ok'}">${m.truncados}</td><td class="${m.desbordes ? 'bad' : 'ok'}">${m.desbordes}</td><td>${m.fechas_fijas}</td><td>${m.dinero_fijo}</td><td>${m.lang_ok}</td><td>${m.dir_ok}</td><td>${m.expansion}</td><td>${m.caracteres}</td></tr>`);
+}
+function csv() {
+  const cols = ['hora', 'locale', 'version', 'pseudo', 'truncados', 'desbordes', 'fechas_fijas', 'dinero_fijo', 'lang_ok', 'dir_ok', 'expansion', 'caracteres'];
+  const s = '﻿' + cols.join(',') + '\n' + log.map(r => cols.map(c => r[c]).join(',')).join('\n');
+  window.__csv = s; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([s], { type: 'text/csv' })); a.download = 'ejercicio_13_2_auditoria_i18n.csv'; a.click();
+}
+function sync() { I18N.set({ locale: $('#loc').value, tz: $('#tz').value, pseudo: $('#ps').checked }); render(); }
+['#loc', '#tz', '#ps'].forEach(s => $(s).addEventListener('change', sync));
+$('#vA').onclick = () => { ver = 'A'; $('#vA').setAttribute('aria-pressed', true); $('#vB').setAttribute('aria-pressed', false); render(); };
+$('#vB').onclick = () => { ver = 'B'; $('#vB').setAttribute('aria-pressed', true); $('#vA').setAttribute('aria-pressed', false); render(); };
+$('#aud_btn').onclick = auditar; $('#csv').onclick = csv; sync();
+</script></body></html>

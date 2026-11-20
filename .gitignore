@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+desktop.ini
+evidencias_auditoria/
+node_modules/
+# CSV exportados por los ejercicios HTML con datos de participantes (nunca se suben)
+ejercicio_13_1_codificaciones.csv
+ejercicio_13_2_auditoria_i18n.csv
+ejercicio_13_3_experimento_formatos_*.csv
